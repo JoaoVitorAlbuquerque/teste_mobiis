@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -8,6 +9,7 @@ import { compare, hash } from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { SignupDto } from './dto/sign-up.dto';
 import { SigninDto } from './dto/sign-in.dto';
+import { DocumentValidator } from 'src/shared/validators/document.validator';
 
 @Injectable()
 export class AuthService {
@@ -41,6 +43,24 @@ export class AuthService {
   async signup(signupDto: SignupDto) {
     const { name, email, password, document, nationality } = signupDto;
 
+    // valida documento
+    if (nationality === 'BR') {
+      const valid = DocumentValidator.isValidCPF(document);
+
+      if (!valid) {
+        throw new BadRequestException('Invalid CPF');
+      }
+    } else {
+      const valid = DocumentValidator.isValidForeignDoc(document);
+
+      if (!valid) {
+        throw new BadRequestException(
+          'Invalid foreign document (6-20, A-Z, 0-9 or "-")',
+        );
+      }
+    }
+
+    // verifica email duplicado
     const emailTaken = await this.usersRepo.findUnique({
       where: { email },
       select: { id: true },
@@ -52,8 +72,19 @@ export class AuthService {
 
     const hashedPassword = await hash(password, 12);
 
+    const normalizedDocument =
+      nationality === 'BR'
+        ? DocumentValidator.onlyDigits(document)
+        : DocumentValidator.normalizeForeignDoc(document);
+
     const user = await this.usersRepo.create({
-      data: { name, email, password: hashedPassword, document, nationality },
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        document: normalizedDocument,
+        nationality,
+      },
     });
 
     const accessToken = await this.generateAccessToken(user.id);
