@@ -10,9 +10,7 @@ export class UsersRepository {
     return this.prismaService.user.create(createDto);
   }
 
-  findMany<T extends Prisma.UserFindManyArgs>(
-    findManyDto: Prisma.SelectSubset<T, Prisma.UserFindManyArgs>,
-  ) {
+  findMany(findManyDto: Prisma.UserFindManyArgs) {
     return this.prismaService.user.findMany(findManyDto);
   }
 
@@ -22,5 +20,9 @@ export class UsersRepository {
 
   findFirst(findFirstDto: Prisma.UserFindFirstArgs) {
     return this.prismaService.user.findFirst(findFirstDto);
+  }
+
+  async count(args: Prisma.UserCountArgs) {
+    return this.prismaService.user.count(args);
   }
 }
