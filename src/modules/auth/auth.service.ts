@@ -48,7 +48,7 @@ export class AuthService {
       const valid = DocumentValidator.isValidCPF(document);
 
       if (!valid) {
-        throw new BadRequestException('Invalid CPF');
+        throw new BadRequestException('Invalid CPF. Please type in this format: 111.222.333-44');
       }
     } else {
       const valid = DocumentValidator.isValidForeignDoc(document);
